@@ -1,0 +1,128 @@
+{%- macro glyph(name) -%}
+<svg class="glyph" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+{%- if name == "lock" -%}
+<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+{%- elif name == "globe" -%}
+<circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/>
+{%- elif name == "search" -%}
+<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+{%- elif name == "theme" -%}
+<circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>
+{%- elif name == "house" -%}
+<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>
+{%- endif -%}
+</svg>
+{%- endmacro -%}
+
+{%- macro icon(value, fallback) -%}
+{%- if value and value.kind == "img" -%}
+<img src="{{ value.src }}" alt="" loading="lazy" decoding="async"{% if value.mono %} class="mono"{% endif %}>
+{%- elif value -%}
+<span class="emoji">{{ value.text }}</span>
+{%- else -%}
+<span class="initial">{{ fallback[:1] | upper }}</span>
+{%- endif -%}
+{%- endmacro -%}
+
+{%- set target = ' target="_blank" rel="noopener"' if site.open_in_new_tab else '' -%}
+<!DOCTYPE html>
+<html lang="{{ site.lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ site.title }}</title>
+{% if site.subtitle %}<meta name="description" content="{{ site.subtitle }}">{% endif %}
+{% if profile == "internal" %}<meta name="robots" content="noindex, nofollow">{% endif %}
+{% if site.favicon %}<link rel="icon" href="{{ site.favicon }}">{% endif %}
+<meta name="color-scheme" content="light dark">
+<script>
+  /* Apply the stored theme before first paint so the page does not flash. */
+  (function () {
+    var t = "{{ site.theme }}";
+    try { t = localStorage.getItem("homepage-theme") || t; } catch (e) {}
+    if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+  })();
+</script>
+<style>
+{{ css | safe }}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="masthead">
+    <div class="masthead-title">
+      <h1>
+        {{ site.title }}
+        {% if profile == "internal" %}<span class="pill" title="This page includes LAN addresses">{{ glyph("house") }}Internal</span>{% endif %}
+      </h1>
+      {% if site.subtitle %}<p class="subtitle">{{ site.subtitle }}</p>{% endif %}
+    </div>
+    <div class="masthead-tools">
+      <label class="search">
+        {{ glyph("search") }}
+        <input id="search" type="search" placeholder="{{ site.labels.search_placeholder }}" autocomplete="off" spellcheck="false" aria-label="Search services">
+        <kbd aria-hidden="true">/</kbd>
+      </label>
+      <button id="theme-toggle" class="icon-button" type="button" aria-label="Change theme">{{ glyph("theme") }}</button>
+    </div>
+  </header>
+
+  <div class="summary" aria-live="polite">
+    <span>{{ total }} services</span>
+    <span class="legend">{{ glyph("globe") }}{{ site.labels.external }}</span>
+    <span class="legend">{{ glyph("lock") }}{{ site.labels.internal }}</span>
+    {% if site.uptime_kuma %}<span id="status-summary" class="status-summary" hidden></span>{% endif %}
+  </div>
+
+  <main>
+    {% for cat in categories %}
+    <section class="category" data-category>
+      <header class="category-head">
+        <h2>
+          {% if cat.icon %}<span class="category-icon">{{ icon(cat.icon, cat.name) }}</span>{% endif %}
+          {{ cat.name }}
+          <span class="count">{{ cat.services | length }}</span>
+        </h2>
+        {% if cat.description %}<p class="category-desc">{{ cat.description }}</p>{% endif %}
+      </header>
+      <div class="grid">
+        {% for s in cat.services %}
+        <article class="card{% if not s.href %} card--locked{% endif %}" data-search="{{ s.search }}"{% if s.monitor is not none %} data-monitor="{{ s.monitor }}"{% endif %}>
+          <div class="card-icon">{{ icon(s.icon, s.name) }}</div>
+          <div class="card-body">
+            <h3 class="card-title">
+              {% if s.href %}
+              <a class="card-link" href="{{ s.href }}"{{ target | safe }}>{{ s.name }}</a>
+              {% else %}
+              <span title="{{ site.labels.internal }}">{{ s.name }}</span>
+              {% endif %}
+            </h3>
+            {% if s.description %}<p class="card-desc">{{ s.description }}</p>{% endif %}
+            <div class="card-meta">
+              {% if s.external %}
+              <span class="access access--external" title="Reachable from the internet">{{ glyph("globe") }}{{ site.labels.external }}</span>
+              {% else %}
+              <span class="access access--internal" title="Only reachable from the home network">{{ glyph("lock") }}{{ site.labels.internal }}</span>
+              {% endif %}
+              {% if s.badge %}<span class="badge">{{ s.badge }}</span>{% endif %}
+              {% for tag in s.tags %}<span class="tag">{{ tag }}</span>{% endfor %}
+              {% if s.lan_href %}<a class="lan-link" href="{{ s.lan_href }}"{{ target | safe }} title="{{ s.lan_href }}">{{ site.labels.lan_link }} ↗</a>{% endif %}
+            </div>
+          </div>
+          {% if site.uptime_kuma and s.monitor is not none %}<span class="status" data-state="unknown" role="img" aria-label="Status unknown"></span>{% endif %}
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+    <p id="empty" class="empty" hidden>{{ site.labels.empty }}</p>
+  </main>
+
+  {% if site.footer %}<footer class="footer">{{ site.footer }}</footer>{% endif %}
+</div>
+<script type="application/json" id="runtime">{{ runtime | safe }}</script>
+<script>
+{{ js | safe }}
+</script>
+</body>
+</html>

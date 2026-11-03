@@ -1,0 +1,168 @@
+# Homelab homepage — edit this file, then run `python build.py`.
+#
+# Two pages are generated from it:
+#   dist/index.html           the public page. LAN-only services are listed with a
+#                             lock but have no link, and their URLs never reach the HTML.
+#   dist/internal/index.html  the internal page. Everything is linked, LAN URLs included.
+#                             Serve it only on your LAN / VPN.
+
+site:
+  title: Homelab
+  subtitle: Services running at home
+  theme: auto            # auto | light | dark  (visitors can still toggle)
+  open_in_new_tab: true
+  # favicon: https://example.com/favicon.svg
+  footer: Self-hosted with care · built from config.yaml
+
+  # Live up/down dots from a *published* Uptime Kuma status page.
+  # The browser fetches it directly, so Kuma must send CORS headers (see README).
+  # Remove this block to turn status off entirely.
+  uptime_kuma:
+    url: https://status.example.com
+    slug: homelab        # the status page's slug (https://status.example.com/status/<slug>)
+    refresh: 60          # seconds between refreshes
+
+  # Override any visible wording.
+  labels:
+    external: Public
+    internal: LAN only
+    # search_placeholder: Search services…
+    # empty: No service matches that search.
+    # lan_link: LAN
+
+# Each category is a section on the page, shown in this order.
+#
+# Service fields:
+#   name         required
+#   url          required. The address you normally use.
+#   external     true if it is reachable from the internet (globe icon), false/omitted
+#                for LAN-only (lock icon). On the public page, LAN-only services are
+#                not linked and their url/local_url are left out of the HTML.
+#   local_url    optional direct LAN address, shown as a small "LAN" link on the internal page
+#   description  optional one-liner
+#   icon         emoji, di:<name> (dashboard-icons), sh:<name> (selfh.st icons),
+#                si:<name> (simple-icons, monochrome), local:<file> (from icons/, inlined),
+#                or any image URL. Omitted -> first letter of the name.
+#   monitor      Uptime Kuma monitor name (case-insensitive) or numeric id
+#   tags         optional list, searchable
+#   badge        optional short free text, e.g. "beta"
+#   hide_when_public: true -> left off the public page entirely
+#   hidden: true -> left off both pages
+#
+# Categories accept: name (required), description, icon, hide_when_public, hidden.
+
+categories:
+  - name: Media
+    icon: 🎬
+    services:
+      - name: Jellyfin
+        url: https://jellyfin.example.com
+        local_url: http://192.168.1.20:8096
+        description: Movies, series and music
+        icon: di:jellyfin
+        external: true
+        monitor: Jellyfin
+        tags: [media, streaming]
+
+      - name: Immich
+        url: https://photos.example.com
+        local_url: http://192.168.1.20:2283
+        description: Photo and video backup
+        icon: di:immich
+        external: true
+        monitor: Immich
+        tags: [photos]
+
+      - name: Audiobookshelf
+        url: https://books.example.com
+        description: Audiobooks and podcasts
+        icon: di:audiobookshelf
+        external: true
+        monitor: Audiobookshelf
+
+      - name: Sonarr
+        url: http://sonarr.lan
+        local_url: http://192.168.1.20:8989
+        description: Series automation
+        icon: di:sonarr
+        monitor: Sonarr
+        tags: [arr]
+
+      - name: Radarr
+        url: http://radarr.lan
+        local_url: http://192.168.1.20:7878
+        description: Movie automation
+        icon: di:radarr
+        monitor: Radarr
+        tags: [arr]
+
+  - name: Productivity
+    icon: 🗂️
+    services:
+      - name: Nextcloud
+        url: https://cloud.example.com
+        description: Files, calendar and contacts
+        icon: di:nextcloud
+        external: true
+        monitor: Nextcloud
+
+      - name: Vaultwarden
+        url: https://vault.example.com
+        description: Password manager
+        icon: di:vaultwarden
+        external: true
+        monitor: Vaultwarden
+
+      - name: Paperless-ngx
+        url: http://paperless.lan
+        description: Scanned documents, searchable
+        icon: di:paperless-ngx
+        monitor: Paperless
+        tags: [documents]
+
+  - name: Smart home
+    icon: 🏠
+    services:
+      - name: Home Assistant
+        url: https://home.example.com
+        local_url: http://192.168.1.30:8123
+        description: Automations and dashboards
+        icon: di:home-assistant
+        external: true
+        monitor: Home Assistant
+
+      - name: Zigbee2MQTT
+        url: http://z2m.lan
+        description: Zigbee bridge
+        icon: di:zigbee2mqtt
+        monitor: Zigbee2MQTT
+
+  - name: Infrastructure
+    icon: 🛠️
+    description: Plumbing that keeps the rest running
+    services:
+      - name: Proxmox
+        url: https://pve.lan:8006
+        description: Hypervisor
+        icon: di:proxmox
+        monitor: Proxmox
+        hide_when_public: true
+
+      - name: Uptime Kuma
+        url: https://status.example.com
+        description: Service monitoring
+        icon: di:uptime-kuma
+        external: true
+
+      - name: AdGuard Home
+        url: http://dns.lan
+        description: Network-wide ad blocking and DNS
+        icon: di:adguard-home
+        monitor: AdGuard
+
+      - name: Router
+        url: http://192.168.1.1
+        description: OPNsense
+        icon: di:opnsense
+        badge: admin
+        hide_when_public: true
