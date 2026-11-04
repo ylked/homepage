@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 """Generate a static homelab homepage from a YAML config.
 
-Two builds come out of one config, so that a publicly reachable page never
-carries internal hostnames:
-
-    dist/index.html           public  — LAN-only services appear as locked,
-                                        unlinked cards with no URL in the HTML
-    dist/internal/index.html  private — every service linked, LAN URLs included
+Every service is linked. LAN-only ones are marked with a lock and simply
+won't open from outside the home network.
 
 Usage:
-    python build.py                   # build both profiles
-    python build.py --profile public  # public page only
-    python build.py --serve           # build, watch and serve on localhost
+    python build.py           # build dist/index.html
+    python build.py --serve   # build, watch and serve on localhost
 """
 
 from __future__ import annotations
@@ -48,9 +43,6 @@ DEFAULT_LABELS = {
     "empty": "No service matches that search.",
     "lan_link": "LAN",
 }
-
-PROFILES = ("public", "internal")
-
 
 class ConfigError(Exception):
     """A problem in config.yaml that the user needs to fix."""
@@ -137,7 +129,6 @@ def normalize_category(entry: object, index: int) -> dict:
         "description": entry.get("description"),
         "icon": resolve_icon(entry.get("icon"), f"{where}.icon"),
         "hidden": bool(entry.get("hidden")),
-        "public": not entry.get("hide_when_public", False),
         "services": [
             normalize_service(svc, f"{where}.services[{i}]")
             for i, svc in enumerate(services)
@@ -168,61 +159,36 @@ def normalize_service(entry: object, where: str) -> dict:
         "badge": entry.get("badge"),
         "monitor": entry.get("monitor"),
         "hidden": bool(entry.get("hidden")),
-        "public": not entry.get("hide_when_public", False),
         "tags": [str(tag) for tag in tags],
         "icon": resolve_icon(entry.get("icon"), f"{where}.icon"),
     }
 
 
 # --------------------------------------------------------------------------- #
-# Profiles
+# View
 # --------------------------------------------------------------------------- #
 
-def project(config: dict, profile: str) -> dict:
-    """Shape the config for one profile, dropping anything it must not expose."""
-    if profile not in PROFILES:
-        raise fail(f"unknown profile '{profile}' (expected one of {', '.join(PROFILES)})")
-    public = profile == "public"
-
+def project(config: dict) -> dict:
+    """Drop hidden categories and services, and add what the template needs."""
     categories = []
     for cat in config["categories"]:
-        if cat["hidden"] or (public and not cat["public"]):
+        if cat["hidden"]:
             continue
-        services = [
-            view_service(svc, public)
-            for svc in cat["services"]
-            if not svc["hidden"] and not (public and not svc["public"])
-        ]
+        services = [view_service(svc) for svc in cat["services"] if not svc["hidden"]]
         if services:
             categories.append({**cat, "services": services})
 
     if not categories:
-        raise fail(f"the '{profile}' profile has no visible services")
-    return {"site": config["site"], "categories": categories, "profile": profile}
+        raise fail("no visible services found — every service is hidden")
+    return {"site": config["site"], "categories": categories}
 
 
-def view_service(svc: dict, public: bool) -> dict:
-    """A service as one profile sees it.
-
-    On the public profile a LAN-only service keeps its name and status but
-    loses every URL, so the generated HTML reveals no internal address.
-    """
-    linked = svc["external"] or not public
-    view = {
-        **svc,
-        "href": svc["url"] if linked else None,
-        "lan_href": None if public else svc["local_url"],
-    }
-    view["search"] = " ".join(
+def view_service(svc: dict) -> dict:
+    search = " ".join(
         part.lower()
-        for part in [
-            view["name"],
-            view["description"] or "",
-            *view["tags"],
-            view["href"] or "",
-        ]
+        for part in [svc["name"], svc["description"] or "", *svc["tags"], svc["url"]]
     ).strip()
-    return view
+    return {**svc, "search": search}
 
 
 # --------------------------------------------------------------------------- #
@@ -295,7 +261,6 @@ def render(view: dict) -> str:
     html = env.get_template("index.html.j2").render(
         site=site,
         categories=view["categories"],
-        profile=view["profile"],
         total=sum(len(cat["services"]) for cat in view["categories"]),
         # "</" would end the <script> element the JSON is embedded in.
         runtime=json.dumps(runtime).replace("</", "<\\/"),
@@ -305,16 +270,12 @@ def render(view: dict) -> str:
     return re.sub(r"\n{3,}", "\n\n", html)
 
 
-def build(config_path: Path, out_dir: Path, profiles: tuple[str, ...]) -> list[tuple[Path, int]]:
-    config = load_config(config_path)
-    written = []
-    for profile in profiles:
-        view = project(config, profile)
-        target = out_dir / ("index.html" if profile == "public" else f"{profile}/index.html")
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(render(view), encoding="utf-8")
-        written.append((target, sum(len(c["services"]) for c in view["categories"])))
-    return written
+def build(config_path: Path, out_dir: Path) -> tuple[Path, int]:
+    view = project(load_config(config_path))
+    target = out_dir / "index.html"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(render(view), encoding="utf-8")
+    return target, sum(len(c["services"]) for c in view["categories"])
 
 
 # --------------------------------------------------------------------------- #
@@ -334,7 +295,7 @@ def collect_sources(config_path: Path) -> dict[Path, float]:
     return stamps
 
 
-def watch(config_path: Path, out_dir: Path, profiles: tuple[str, ...]) -> None:
+def watch(config_path: Path, out_dir: Path) -> None:
     print("Watching config.yaml, templates/, assets/ and icons/ — Ctrl-C to stop.")
     stamps = collect_sources(config_path)
     while True:
@@ -344,11 +305,11 @@ def watch(config_path: Path, out_dir: Path, profiles: tuple[str, ...]) -> None:
             continue
         stamps = current
         try:
-            written = build(config_path, out_dir, profiles)
+            _, count = build(config_path, out_dir)
         except ConfigError as exc:
             print(f"\n  error: {exc}\n", file=sys.stderr)
             continue
-        print("  rebuilt — " + ", ".join(f"{p.name}: {n} services" for p, n in written))
+        print(f"  rebuilt — {count} services")
 
 
 class QuietHandler(http.server.SimpleHTTPRequestHandler):
@@ -364,7 +325,7 @@ def serve(out_dir: Path, port: int) -> None:
     handler = functools.partial(QuietHandler, directory=str(out_dir))
     socketserver.TCPServer.allow_reuse_address = True
     httpd = socketserver.TCPServer(("127.0.0.1", port), handler)
-    print(f"Serving {out_dir} at http://127.0.0.1:{port} (internal page: /internal/)")
+    print(f"Serving {out_dir} at http://127.0.0.1:{port}")
     threading.Thread(target=httpd.serve_forever, daemon=True).start()
 
 
@@ -374,12 +335,6 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build a static homelab homepage from YAML.")
     parser.add_argument("-c", "--config", default="config.yaml", type=Path)
     parser.add_argument("-o", "--out", default="dist", type=Path, help="output directory")
-    parser.add_argument(
-        "--profile",
-        choices=(*PROFILES, "both"),
-        default="both",
-        help="which page(s) to build (default: both)",
-    )
     parser.add_argument("-w", "--watch", action="store_true", help="rebuild on file changes")
     parser.add_argument("-s", "--serve", action="store_true", help="serve the output and watch")
     parser.add_argument("-p", "--port", default=8000, type=int)
@@ -387,23 +342,21 @@ def main(argv: list[str] | None = None) -> int:
 
     config_path = args.config if args.config.is_absolute() else ROOT / args.config
     out_dir = args.out if args.out.is_absolute() else ROOT / args.out
-    profiles = PROFILES if args.profile == "both" else (args.profile,)
 
     try:
-        written = build(config_path, out_dir, profiles)
+        target, count = build(config_path, out_dir)
     except ConfigError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    for target, count in written:
-        shown = target.relative_to(ROOT) if target.is_relative_to(ROOT) else target
-        print(f"Built {shown} — {count} services")
+    shown = target.relative_to(ROOT) if target.is_relative_to(ROOT) else target
+    print(f"Built {shown} — {count} services")
 
     if args.serve:
         serve(out_dir, args.port)
     if args.serve or args.watch:
         try:
-            watch(config_path, out_dir, profiles)
+            watch(config_path, out_dir)
         except KeyboardInterrupt:
             print("\nStopped.")
     return 0

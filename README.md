@@ -10,19 +10,14 @@ self-contained `index.html` (CSS and JS inlined) that any web server can host.
 - Search: press `/` to focus, `Enter` opens the first match, `Esc` clears.
 - Light/dark mode follows the system, and the button cycles auto → dark → light.
 
-## Two pages, one config
+## Public and LAN-only services
 
-The homepage is public, so a single build would leak internal hostnames and IPs.
-Every build therefore writes two pages:
+There is one page, and every service on it is linked. Services marked 🔒 **LAN only**
+(no `external: true`) only open from the home network or VPN. From outside, the
+link just won't load.
 
-| File | Audience | What it contains |
-| --- | --- | --- |
-| `dist/index.html` | the internet | Public services linked. LAN-only services listed with a lock, **not linked**, and with no `url`/`local_url` in the HTML. `hide_when_public` entries left out entirely. |
-| `dist/internal/index.html` | LAN / VPN only | Everything linked, plus a small `LAN ↗` link for each `local_url`. Marked `noindex`. |
-
-The internal page is protected only by where you serve it, so put it on a
-LAN-only vhost (or behind your VPN / reverse-proxy auth), never next to the
-public page.
+The page contains every hostname in `config.yaml`, so only list addresses you
+don't mind being visible.
 
 ## Usage
 
@@ -31,14 +26,14 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ```
 
 ```bash
-.venv/bin/python build.py            # build both pages into dist/
+.venv/bin/python build.py            # build dist/index.html
 ```
 
 ```bash
 .venv/bin/python build.py --serve    # build, rebuild on save, serve on http://127.0.0.1:8000
 ```
 
-Other flags: `--profile public|internal|both`, `-c other.yaml`, `-o outdir`, `--watch`, `-p PORT`.
+Other flags: `-c other.yaml`, `-o outdir`, `--watch`, `-p PORT`.
 Config mistakes are reported with their location, e.g.
 `error: categories[0].services[2] ('Sonarr') is missing a 'url'`.
 
@@ -97,35 +92,22 @@ If Kuma is unreachable the page still works: the dots stay grey and nothing else
 
 ## Deploying
 
-Each page is a single file, so you can copy it to any static host:
+The page is a single file, so you can copy it to any static host:
 
 ```bash
 rsync dist/index.html server:/srv/www/home/
 ```
 
-You can also use Docker. The Dockerfile has a separate target per page, so the
-public image cannot contain the internal page:
-
-```bash
-docker build --target public -t homepage:public .
-```
-
-```bash
-docker build --target internal -t homepage:internal .
-```
-
-Or build and run both with Docker Compose. Run it again with `--build` after
+Or build and serve it with nginx using Docker Compose. Run this again after
 editing `config.yaml`:
 
 ```bash
 docker compose up -d --build
 ```
 
-The public page listens on port `8080` on all interfaces. The internal page
-listens on `127.0.0.1:8081` only. To change this, set `PUBLIC_PORT`,
-`PUBLIC_BIND`, `INTERNAL_PORT` or `INTERNAL_BIND` in the environment or in a
-`.env` file, for example `INTERNAL_BIND=192.168.1.10` to reach the internal
-page from your LAN.
+It listens on port `8080` on all interfaces. To change that, set `HOMEPAGE_PORT`
+or `HOMEPAGE_BIND` in the environment or in a `.env` file next to
+`docker-compose.yml`, for example `HOMEPAGE_PORT=18080`.
 
 ## Customising
 

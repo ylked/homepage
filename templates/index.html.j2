@@ -8,8 +8,6 @@
 <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
 {%- elif name == "theme" -%}
 <circle cx="12" cy="12" r="9"/><path d="M12 3v18" /><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>
-{%- elif name == "house" -%}
-<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>
 {%- endif -%}
 </svg>
 {%- endmacro -%}
@@ -32,7 +30,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ site.title }}</title>
 {% if site.subtitle %}<meta name="description" content="{{ site.subtitle }}">{% endif %}
-{% if profile == "internal" %}<meta name="robots" content="noindex, nofollow">{% endif %}
 {% if site.favicon %}<link rel="icon" href="{{ site.favicon }}">{% endif %}
 <meta name="color-scheme" content="light dark">
 <script>
@@ -51,10 +48,7 @@
 <div class="page">
   <header class="masthead">
     <div class="masthead-title">
-      <h1>
-        {{ site.title }}
-        {% if profile == "internal" %}<span class="pill" title="This page includes LAN addresses">{{ glyph("house") }}Internal</span>{% endif %}
-      </h1>
+      <h1>{{ site.title }}</h1>
       {% if site.subtitle %}<p class="subtitle">{{ site.subtitle }}</p>{% endif %}
     </div>
     <div class="masthead-tools">
@@ -87,15 +81,11 @@
       </header>
       <div class="grid">
         {% for s in cat.services %}
-        <article class="card{% if not s.href %} card--locked{% endif %}" data-search="{{ s.search }}"{% if s.monitor is not none %} data-monitor="{{ s.monitor }}"{% endif %}>
+        <article class="card" data-search="{{ s.search }}"{% if s.monitor is not none %} data-monitor="{{ s.monitor }}"{% endif %}>
           <div class="card-icon">{{ icon(s.icon, s.name) }}</div>
           <div class="card-body">
             <h3 class="card-title">
-              {% if s.href %}
-              <a class="card-link" href="{{ s.href }}"{{ target | safe }}>{{ s.name }}</a>
-              {% else %}
-              <span title="{{ site.labels.internal }}">{{ s.name }}</span>
-              {% endif %}
+              <a class="card-link" href="{{ s.url }}"{{ target | safe }}>{{ s.name }}</a>
             </h3>
             {% if s.description %}<p class="card-desc">{{ s.description }}</p>{% endif %}
             <div class="card-meta">
@@ -106,7 +96,7 @@
               {% endif %}
               {% if s.badge %}<span class="badge">{{ s.badge }}</span>{% endif %}
               {% for tag in s.tags %}<span class="tag">{{ tag }}</span>{% endfor %}
-              {% if s.lan_href %}<a class="lan-link" href="{{ s.lan_href }}"{{ target | safe }} title="{{ s.lan_href }}">{{ site.labels.lan_link }} ↗</a>{% endif %}
+              {% if s.local_url %}<a class="lan-link" href="{{ s.local_url }}"{{ target | safe }} title="{{ s.local_url }}">{{ site.labels.lan_link }} ↗</a>{% endif %}
             </div>
           </div>
           {% if site.uptime_kuma and s.monitor is not none %}<span class="status" data-state="unknown" role="img" aria-label="Status unknown"></span>{% endif %}

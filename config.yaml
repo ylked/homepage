@@ -1,10 +1,6 @@
 # Homelab homepage — edit this file, then run `python build.py`.
-#
-# Two pages are generated from it:
-#   dist/index.html           the public page. LAN-only services are listed with a
-#                             lock but have no link, and their URLs never reach the HTML.
-#   dist/internal/index.html  the internal page. Everything is linked, LAN URLs included.
-#                             Serve it only on your LAN / VPN.
+# It generates dist/index.html. Every service is linked; LAN-only ones are marked
+# with a lock and only open from the home network.
 
 site:
   title: Homelab
@@ -36,9 +32,8 @@ site:
 #   name         required
 #   url          required. The address you normally use.
 #   external     true if it is reachable from the internet (globe icon), false/omitted
-#                for LAN-only (lock icon). On the public page, LAN-only services are
-#                not linked and their url/local_url are left out of the HTML.
-#   local_url    optional direct LAN address, shown as a small "LAN" link on the internal page
+#                for LAN-only (lock icon)
+#   local_url    optional direct LAN address, shown as a small "LAN" link
 #   description  optional one-liner
 #   icon         emoji, di:<name> (dashboard-icons), sh:<name> (selfh.st icons),
 #                si:<name> (simple-icons, monochrome), local:<file> (from icons/, inlined),
@@ -46,10 +41,9 @@ site:
 #   monitor      Uptime Kuma monitor name (case-insensitive) or numeric id
 #   tags         optional list, searchable
 #   badge        optional short free text, e.g. "beta"
-#   hide_when_public: true -> left off the public page entirely
-#   hidden: true -> left off both pages
+#   hidden: true -> left off the page
 #
-# Categories accept: name (required), description, icon, hide_when_public, hidden.
+# Categories accept: name (required), description, icon, hidden.
 
 categories:
   - name: Media
