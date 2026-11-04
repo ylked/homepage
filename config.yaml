@@ -18,8 +18,8 @@ site:
   # The browser fetches it directly, so Kuma must send CORS headers (see README).
   # Remove this block to turn status off entirely.
   uptime_kuma:
-    url: https://status.example.com
-    slug: homelab        # the status page's slug (https://status.example.com/status/<slug>)
+    url: https://status.ylked.ch
+    slug: default        # the status page's slug (https://status.ylked.ch/status/<slug>)
     refresh: 60          # seconds between refreshes
 
   # Override any visible wording.
@@ -56,113 +56,124 @@ categories:
     icon: 🎬
     services:
       - name: Jellyfin
-        url: https://jellyfin.example.com
-        local_url: http://192.168.1.20:8096
+        url: https://tv.ylked.ch
         description: Movies, series and music
-        icon: di:jellyfin
+        icon: sh:jellyfin
         external: true
         monitor: Jellyfin
         tags: [media, streaming]
 
-      - name: Immich
-        url: https://photos.example.com
-        local_url: http://192.168.1.20:2283
-        description: Photo and video backup
-        icon: di:immich
+      - name: jfa-go
+        url: https://jfa.ylked.ch
+        description: Jellyfin invites and accounts
+        icon: sh:jfa-go
         external: true
-        monitor: Immich
-        tags: [photos]
+        monitor: JFA Go
+        tags: [media, accounts]
 
-      - name: Audiobookshelf
-        url: https://books.example.com
-        description: Audiobooks and podcasts
-        icon: di:audiobookshelf
+      - name: Seerr
+        url: https://seerr.ylked.ch
+        description: Request movies and series
+        icon: sh:seerr
         external: true
-        monitor: Audiobookshelf
+        monitor: Seerr
+        tags: [media, requests]
 
-      - name: Sonarr
-        url: http://sonarr.lan
-        local_url: http://192.168.1.20:8989
-        description: Series automation
-        icon: di:sonarr
-        monitor: Sonarr
-        tags: [arr]
-
-      - name: Radarr
-        url: http://radarr.lan
-        local_url: http://192.168.1.20:7878
-        description: Movie automation
-        icon: di:radarr
-        monitor: Radarr
-        tags: [arr]
+      - name: Tracearr
+        url: https://tracearr.ykd.ch
+        description: Playback stats and monitoring
+        icon: sh:tracearr
+        monitor: Tracearr
+        tags: [media, stats]
 
   - name: Productivity
     icon: 🗂️
     services:
       - name: Nextcloud
-        url: https://cloud.example.com
+        url: https://cloud.ylked.ch
         description: Files, calendar and contacts
-        icon: di:nextcloud
+        icon: sh:nextcloud
         external: true
         monitor: Nextcloud
 
-      - name: Vaultwarden
-        url: https://vault.example.com
-        description: Password manager
-        icon: di:vaultwarden
+      - name: Vikunja
+        url: https://todo.ylked.ch
+        description: Tasks and to-do lists
+        icon: sh:vikunja
         external: true
-        monitor: Vaultwarden
+        monitor: Vikunja
+        tags: [tasks]
+
+      - name: Grist
+        url: https://grist.ylked.ch
+        description: Relational spreadsheets
+        icon: sh:grist
+        external: true
+        monitor: Grist
+        tags: [spreadsheets, data]
+
+      - name: Gom
+        url: https://gom.ykd.ch
+        description: Custom app
+        monitor: Gom
+        badge: custom
+
+  - name: Docs & writing
+    icon: 📝
+    services:
+      - name: Docmost
+        url: https://doc.ylked.ch
+        description: Wiki and documentation
+        icon: sh:docmost
+        external: true
+        monitor: Docmost
+        tags: [wiki, docs]
+
+      - name: Ghost
+        url: https://blog.ylked.ch
+        description: Blog
+        icon: si:ghost
+        external: true
+        monitor: Nématode blog
+        tags: [blog]
 
       - name: Paperless-ngx
-        url: http://paperless.lan
+        url: https://paperless.ykd.ch
         description: Scanned documents, searchable
-        icon: di:paperless-ngx
-        monitor: Paperless
+        icon: sh:paperless-ngx
+        monitor: Paperless-ngx
         tags: [documents]
 
   - name: Smart home
     icon: 🏠
     services:
       - name: Home Assistant
-        url: https://home.example.com
-        local_url: http://192.168.1.30:8123
+        url: https://ha.ykd.ch
         description: Automations and dashboards
-        icon: di:home-assistant
-        external: true
+        icon: sh:home-assistant
         monitor: Home Assistant
 
-      - name: Zigbee2MQTT
-        url: http://z2m.lan
-        description: Zigbee bridge
-        icon: di:zigbee2mqtt
-        monitor: Zigbee2MQTT
+      - name: Music Assistant
+        url: https://music.ykd.ch
+        description: Music across the house
+        icon: sh:music-assistant
+        monitor: Music Assistant
+        tags: [music, audio]
 
   - name: Infrastructure
     icon: 🛠️
-    description: Plumbing that keeps the rest running
     services:
-      - name: Proxmox
-        url: https://pve.lan:8006
-        description: Hypervisor
-        icon: di:proxmox
-        monitor: Proxmox
-        hide_when_public: true
+      - name: Authentik
+        url: https://auth.ylked.ch
+        description: Single sign-on
+        icon: sh:authentik
+        external: true
+        monitor: Authentik
+        tags: [sso, auth]
 
       - name: Uptime Kuma
-        url: https://status.example.com
+        url: https://status.ylked.ch
         description: Service monitoring
-        icon: di:uptime-kuma
+        icon: sh:uptime-kuma
         external: true
-
-      - name: AdGuard Home
-        url: http://dns.lan
-        description: Network-wide ad blocking and DNS
-        icon: di:adguard-home
-        monitor: AdGuard
-
-      - name: Router
-        url: http://192.168.1.1
-        description: OPNsense
-        icon: di:opnsense
-        badge: admin
-        hide_when_public: true
+        tags: [monitoring, status]
