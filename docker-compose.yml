@@ -1,0 +1,26 @@
+# Builds both pages from config.yaml and serves each with nginx.
+#
+#   docker compose up -d --build     # rebuild after editing config.yaml
+#
+# The internal page lists LAN hostnames, so by default it only listens on
+# localhost. Set INTERNAL_BIND to a LAN address (e.g. 192.168.1.10) to expose
+# it on your network, but never on a public interface.
+
+services:
+  public:
+    build:
+      context: .
+      target: public
+    image: homepage:public
+    ports:
+      - "${PUBLIC_BIND:-0.0.0.0}:${PUBLIC_PORT:-8080}:80"
+    restart: unless-stopped
+
+  internal:
+    build:
+      context: .
+      target: internal
+    image: homepage:internal
+    ports:
+      - "${INTERNAL_BIND:-127.0.0.1}:${INTERNAL_PORT:-8081}:80"
+    restart: unless-stopped

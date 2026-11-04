@@ -114,6 +114,19 @@ docker build --target public -t homepage:public .
 docker build --target internal -t homepage:internal .
 ```
 
+Or build and run both with Docker Compose. Run it again with `--build` after
+editing `config.yaml`:
+
+```bash
+docker compose up -d --build
+```
+
+The public page listens on port `8080` on all interfaces. The internal page
+listens on `127.0.0.1:8081` only. To change this, set `PUBLIC_PORT`,
+`PUBLIC_BIND`, `INTERNAL_PORT` or `INTERNAL_BIND` in the environment or in a
+`.env` file, for example `INTERNAL_BIND=192.168.1.10` to reach the internal
+page from your LAN.
+
 ## Customising
 
 - **Content**: `config.yaml`
